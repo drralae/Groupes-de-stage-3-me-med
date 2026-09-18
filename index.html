@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختيار أفواج الستاج - السنة الثالثة طب</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449; --accent:#22c55e; --accent-d:#16a34a;
+    --danger:#ef4444; --muted:#94a3b8; --text:#e2e8f0; --full:#475569; --border:#334155;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Cairo',sans-serif;background:linear-gradient(180deg,#0f172a,#111827);color:var(--text);min-height:100vh;padding-bottom:60px}
+  header{text-align:center;padding:28px 16px 18px}
+  header h1{margin:0 0 6px;font-size:22px;font-weight:800}
+  header p{margin:0;color:var(--muted);font-size:14px}
+  .wrap{max-width:720px;margin:0 auto;padding:0 14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:var(--text);font-size:15px;font-family:inherit;margin-bottom:12px}
+  input:focus{outline:2px solid var(--accent)}
+  button{width:100%;padding:13px;border:none;border-radius:10px;background:var(--accent);color:#052e14;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  button:disabled{background:var(--full);color:#cbd5e1;cursor:not-allowed}
+  button.secondary{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+  .msg{padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:14px;display:none}
+  .msg.error{background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d;display:block}
+  .msg.success{background:#0f2f1d;color:#86efac;border:1px solid #14532d;display:block}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:420px){.grid{grid-template-columns:1fr}}
+  .group{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .group.full{opacity:.55}
+  .group h3{margin:0 0 4px;font-size:16px}
+  .group .count{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .group .count b{color:var(--text)}
+  .members{font-size:12px;color:var(--muted);max-height:90px;overflow-y:auto;margin-bottom:10px;line-height:1.7}
+  .group button{padding:9px;font-size:13px}
+  .assigned-box{text-align:center;padding:26px 14px}
+  .assigned-box .num{font-size:44px;font-weight:800;color:var(--accent);margin:8px 0}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px;opacity:.6}
+  footer a{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px;border-bottom:1px solid var(--border);text-align:right}
+  th{color:var(--muted);font-weight:600}
+  .hidden{display:none}
+  .top-actions{display:flex;gap:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>اختيار أفواج الستاج</h1>
+  <p>السنة الثالثة طب - الأفواج 11 إلى 16</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== قسم الدخول ===== -->
+  <div class="card" id="loginCard">
+    <div class="msg error" id="loginError"></div>
+    <label>الاسم واللقب الكامل</label>
+    <input type="text" id="nameInput" placeholder="مثال: بن علي محمد">
+    <label>رقم التسجيل الجامعي (Matricule)</label>
+    <input type="text" id="matInput" placeholder="أدخل رقم التسجيل">
+    <button id="checkBtn">دخول</button>
+  </div>
+
+  <!-- ===== حالة: مسجل من قبل ===== -->
+  <div class="card assigned-box hidden" id="assignedCard">
+    <div>أنت مسجل مسبقا في</div>
+    <div class="num" id="assignedNum">-</div>
+    <div id="assignedMembers" style="text-align:right;font-size:13px;color:var(--muted);margin-top:14px"></div>
+    <button class="secondary" style="margin-top:16px" onclick="location.reload()">رجوع</button>
+  </div>
+
+  <!-- ===== شبكة الأفواج ===== -->
+  <div id="groupsSection" class="hidden">
+    <div class="msg error" id="pickError"></div>
+    <div class="msg success" id="pickSuccess"></div>
+    <div class="grid" id="groupsGrid"></div>
+  </div>
+
+</div>
+
+<footer>
+  <a href="#admin" onclick="showAdmin()">لوحة التحكم</a>
+</footer>
+
+<!-- ===== لوحة الإدارة ===== -->
+<div class="wrap hidden" id="adminSection">
+  <div class="card" id="adminLoginCard">
+    <label>كلمة السر</label>
+    <input type="password" id="adminPass">
+    <button id="adminLoginBtn">دخول للوحة التحكم</button>
+  </div>
+  <div class="card hidden" id="adminPanelCard">
+    <div class="top-actions">
+      <button id="exportBtn">تحميل Excel</button>
+      <button class="secondary" onclick="location.reload()">رجوع للموقع</button>
+    </div>
+    <div id="adminTables" style="margin-top:16px"></div>
+  </div>
+</div>
+
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// ==== إعدادات Firebase ====
+const firebaseConfig = {
+  apiKey: "AIzaSyCVWdL8aoJQFm7ZXj3GaxpXtrqV69zLW2M",
+  authDomain: "stage-3eme-medecine.firebaseapp.com",
+  projectId: "stage-3eme-medecine",
+  storageBucket: "stage-3eme-medecine.firebasestorage.app",
+  messagingSenderId: "421324918267",
+  appId: "1:421324918267:web:094f8cc394a5f6915b8f5e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// !! غيّر كلمة السر هذي قبل ما تنشر الموقع !!
+const ADMIN_PASSWORD = "stage2026";
+
+const GROUP_IDS = [11,12,13,14,15,16];
+const MAX_MAP = {11:8, 12:9, 13:14, 14:8, 15:7, 16:12};
+function maxFor(id){ return MAX_MAP[Number(id)]; }
+
+const groupsCol = db.collection('groups');
+const regsCol = db.collection('registrations');
+
+// تهيئة وثائق الأفواج (لا تمس العداد إذا كان موجود)
+async function ensureGroupsSeeded(){
+  const batch = db.batch();
+  GROUP_IDS.forEach(i=>{
+    batch.set(groupsCol.doc(String(i)), { max: maxFor(i) }, { merge:true });
+  });
+  await batch.commit();
+}
+
+let allRegs = [];   // كل التسجيلات (real-time)
+let allGroups = {}; // بيانات الأفواج (real-time)
+let myMatricule = null;
+
+function normalizeMat(v){ return (v||'').trim(); }
+
+// ====== الاستماع الحي ======
+function listenGroups(){
+  groupsCol.onSnapshot(snap=>{
+    snap.forEach(doc=> allGroups[doc.id] = doc.data());
+    renderGrid();
+  });
+}
+function listenRegs(){
+  regsCol.onSnapshot(snap=>{
+    allRegs = [];
+    snap.forEach(doc=> allRegs.push(doc.data()));
+    renderGrid();
+    if (document.getElementById('adminPanelCard').classList.contains('hidden')===false){
+      renderAdminTables();
+    }
+  });
+}
+
+function renderGrid(){
+  const grid = document.getElementById('groupsGrid');
+  if (!grid || document.getElementById('groupsSection').classList.contains('hidden')) return;
+  grid.innerHTML = '';
+  GROUP_IDS.forEach(i=>{
+    const gid = String(i);
+    const max = (allGroups[gid] && allGroups[gid].max) || maxFor(i);
+    const members = allRegs.filter(r=>r.groupId===gid);
+    const count = members.length;
+    const full = count >= max;
+    const div = document.createElement('div');
+    div.className = 'group' + (full?' full':'');
+    div.innerHTML = `
+      <h3>الفوج ${i}</h3>
+      <div class="count"><b>${count}</b> / ${max} طالب</div>
+      <div class="members">${members.map(m=>m.name).join('، ') || '<span style="opacity:.5">لا يوجد طلبة بعد</span>'}</div>
+      <button ${full?'disabled':''} data-gid="${gid}">${full?'الفوج عامر':'اختر هذا الفوج'}</button>
+    `;
+    div.querySelector('button').addEventListener('click', ()=>pickGroup(gid));
+    grid.appendChild(div);
+  });
+}
+
+// ====== تسجيل الدخول / التحقق ======
+document.getElementById('checkBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('nameInput').value.trim();
+  const mat = normalizeMat(document.getElementById('matInput').value);
+  const err = document.getElementById('loginError');
+  err.style.display='none';
+  if (!name || !mat){
+    err.textContent = 'خاصك تكتب الاسم واللقب ورقم التسجيل';
+    err.style.display='block';
+    return;
+  }
+  myMatricule = mat;
+  myName = name;
+  const existing = await regsCol.doc(mat).get();
+  if (existing.exists){
+    const data = existing.data();
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('assignedCard').classList.remove('hidden');
+    document.getElementById('assignedNum').textContent = data.groupId;
+    const members = allRegs.filter(r=>r.groupId===data.groupId).map(m=>m.name);
+    document.getElementById('assignedMembers').innerHTML = 'زملاؤك في نفس الفوج:<br>' + (members.join('، ')||'-');
+  } else {
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('groupsSection').classList.remove('hidden');
+    renderGrid();
+  }
+});
+
+let myName = null;
+
+// ====== اختيار الفوج (transaction آمنة) ======
+async function pickGroup(gid){
+  const errBox = document.getElementById('pickError');
+  const okBox = document.getElementById('pickSuccess');
+  errBox.style.display='none'; okBox.style.display='none';
+  if (!confirm('تأكيد اختيار الفوج رقم ' + gid + ' ؟ ما يمكنش تبدلو من بعد.')) return;
+
+  const groupRef = groupsCol.doc(gid);
+  const regRef = regsCol.doc(myMatricule);
+
+  try{
+    await db.runTransaction(async (tx)=>{
+      const [groupSnap, regSnap] = await Promise.all([tx.get(groupRef), tx.get(regRef)]);
+      if (regSnap.exists){
+        throw new Error('ALREADY_REGISTERED');
+      }
+      const data = groupSnap.data() || {};
+      const max = data.max || maxFor(parseInt(gid));
+      const count = data.count || 0;
+      if (count >= max){
+        throw new Error('FULL');
+      }
+      tx.set(groupRef, { max, count: count + 1 }, { merge:true });
+      tx.set(regRef, {
+        name: myName,
+        matricule: myMatricule,
+        groupId: gid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    okBox.textContent = 'تم! سجلت في الفوج رقم ' + gid;
+    okBox.style.display='block';
+    document.getElementById('groupsSection').classList.add('hidden');
+    document.getElementById('assignedCard').classList.remove('hidden');
+    document.getElementById('assignedNum').textContent = gid;
+  } catch(e){
+    if (e.message==='FULL'){
+      errBox.textContent = 'للأسف هذا الفوج عمر قبل ما تأكد، اختار فوج آخر.';
+    } else if (e.message==='ALREADY_REGISTERED'){
+      errBox.textContent = 'أنت مسجل من قبل في فوج آخر.';
+    } else {
+      errBox.textContent = 'صار خطأ، عاود جرب.';
+      console.error(e);
+    }
+    errBox.style.display='block';
+  }
+}
+
+// ====== لوحة الإدارة ======
+function showAdmin(){
+  document.querySelector('.wrap').classList.add('hidden');
+  document.querySelector('header').classList.add('hidden');
+  document.getElementById('adminSection').classList.remove('hidden');
+}
+document.getElementById('adminLoginBtn').addEventListener('click', ()=>{
+  const pass = document.getElementById('adminPass').value;
+  if (pass === ADMIN_PASSWORD){
+    document.getElementById('adminLoginCard').classList.add('hidden');
+    document.getElementById('adminPanelCard').classList.remove('hidden');
+    renderAdminTables();
+  } else {
+    alert('كلمة السر خاطئة');
+  }
+});
+
+function renderAdminTables(){
+  const container = document.getElementById('adminTables');
+  let html = `<p style="color:var(--muted);font-size:13px">إجمالي المسجلين: <b>${allRegs.length}</b></p>`;
+  GROUP_IDS.forEach(i=>{
+    const gid = String(i);
+    const members = allRegs.filter(r=>r.groupId===gid);
+    html += `<h4 style="margin:16px 0 6px">الفوج ${i} (${members.length}/${maxFor(i)})</h4>`;
+    html += '<table><tr><th>الاسم واللقب</th><th>Matricule</th></tr>';
+    members.forEach(m=> html += `<tr><td>${m.name}</td><td>${m.matricule}</td></tr>`);
+    html += '</table>';
+  });
+  container.innerHTML = html;
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const wb = XLSX.utils.book_new();
+  GROUP_IDS.forEach(i=>{
+    const gid = String(i);
+    const members = allRegs.filter(r=>r.groupId===gid)
+      .map(m=>({ 'الاسم واللقب': m.name, 'Matricule': m.matricule }));
+    const ws = XLSX.utils.json_to_sheet(members.length? members : [{'الاسم واللقب':'', 'Matricule':''}]);
+    XLSX.utils.book_append_sheet(wb, ws, 'الفوج ' + i);
+  });
+  XLSX.writeFile(wb, 'افواج_الستاج.xlsx');
+});
+
+// ====== انطلاق ======
+if (location.hash === '#admin') showAdmin();
+ensureGroupsSeeded().then(()=>{
+  listenGroups();
+  listenRegs();
+});
+</script>
+</body>
+</html>
